@@ -1,21 +1,446 @@
-<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#17365d"><link rel="manifest" href="manifest.webmanifest"><title>Attention Atölyesi</title><style>
-*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial;background:#f3f6f9;color:#162235}header{background:#17365d;color:white;padding:18px 22px}header h1{margin:0;font-size:25px}main{max-width:1050px;margin:auto;padding:20px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.card{background:white;border:1px solid #d8dee8;border-radius:16px;padding:18px;margin-bottom:16px}h2{font-size:18px;margin:0 0 14px}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0}label{display:block;font-size:13px;color:#667085;margin-bottom:5px}input,select{width:100%;padding:11px;border:1px solid #cbd3df;border-radius:10px;background:white;font-size:16px}button{border:0;border-radius:11px;padding:12px 16px;font-weight:700;font-size:15px}.primary{background:#17365d;color:white}.secondary{background:#e8edf4;color:#17365d}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px}.note{font-size:12px;color:#667085;line-height:1.45}#stage{display:none;position:fixed;inset:0;background:white;z-index:10;align-items:center;justify-content:center;flex-direction:column}#stim{font-size:min(28vw,220px);font-weight:800;text-align:center}#topbar{position:absolute;top:20px;left:24px;right:24px;display:flex;justify-content:space-between;color:#667085}#controls{position:absolute;bottom:25px;display:flex;gap:10px;opacity:.2}#controls:hover{opacity:1}#countdown{font-size:120px;font-weight:800}.dots{font-size:52px;letter-spacing:7px}#report{display:none}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.stats div{background:#f6f8fb;padding:12px;border-radius:10px}@media(max-width:760px){.grid,.row{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
-</style></head><body><header><h1>Attention Atölyesi</h1><div>Senkronize görsel + işitsel oturum motoru</div></header><main>
-<div class="grid"><section class="card"><h2>1. Görsel Oturum</h2><div class="row"><div><label>Öğrenci / oturum adı</label><input id="student" placeholder="Örn. 3. sınıf - Yön 1"></div><div><label>Görsel görev</label><select id="visual"><option value="direction">Yön–İnhibisyon</option><option value="stroop">Renk–Kelime Stroop</option><option value="number">Sayı–Çokluk</option><option value="size">Büyük–Küçük</option></select></div></div><div class="row"><div><label>Toplam süre</label><select id="minutes"><option value="1">1 dk</option><option value="2">2 dk</option><option value="3" selected>3 dk</option><option value="5">5 dk</option></select></div><div><label>Görsel değişim</label><select id="interval"><option value="4000">4 sn</option><option value="3000" selected>3 sn</option><option value="2500">2,5 sn</option><option value="2000">2 sn</option></select></div></div><div class="row"><div><label>Uyumsuz oranı</label><select id="incon"><option value=".3">%30</option><option value=".5">%50</option><option value=".6" selected>%60</option><option value=".7">%70</option></select></div><div><label>Alıştırma</label><select id="practice"><option value="5">5 deneme</option><option value="8">8 deneme</option><option value="0">Yok</option></select></div></div></section>
-<section class="card"><h2>2. İşitsel Kanal</h2><div class="row"><div><label>İşitsel görev</label><select id="audio"><option value="triple">Aynı enstrüman 3 kez</option><option value="target">Hedef ses: davul</option><option value="none">Kapalı</option></select></div><div><label>Ses aralığı</label><select id="audrate"><option value="3500">Seyrek</option><option value="2700" selected>Orta</option><option value="2100">Yoğun</option></select></div></div><label>Cevap biçimi</label><select id="response"><option>Kağıda işaretleme</option><option>Ekrana dokunma</option><option>Sesli cevap</option><option>Fiziksel hareket</option></select><div class="actions"><button class="secondary" onclick="preview()">Önizleme</button><button class="secondary" onclick="savePreset()">Ayarı Kaydet</button><button class="primary" onclick="startSession()">Oturumu Başlat</button></div></section></div>
-<section class="card"><h2>Hazır Ayarlar</h2><div id="presets" class="actions"></div><p class="note">Eğitim oturumu aracıdır; standartlaştırılmış Attentioner testi veya tanısal değerlendirme aracı değildir.</p></section>
-<section id="report" class="card"><h2>Oturum Özeti</h2><div class="stats" id="stats"></div></section></main>
-<div id="stage"><div id="topbar"><span id="sessionLabel"></span><span id="timer"></span></div><div id="countdown"></div><div id="stim"></div><div id="controls"><button class="secondary" onclick="togglePause()">Duraklat / Devam</button><button class="secondary" onclick="endSession()">Bitir</button></div></div>
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17365d">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Attention Atölyesi</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial;background:#f3f6f9;color:#162235}
+header{background:#17365d;color:white;padding:18px 22px}
+header h1{margin:0;font-size:25px}
+main{max-width:1050px;margin:auto;padding:20px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{background:white;border:1px solid #d8dee8;border-radius:16px;padding:18px;margin-bottom:16px}
+h2{font-size:18px;margin:0 0 14px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0}
+label{display:block;font-size:13px;color:#667085;margin-bottom:5px}
+input,select{width:100%;padding:11px;border:1px solid #cbd3df;border-radius:10px;background:white;font-size:16px}
+button{border:0;border-radius:11px;padding:12px 16px;font-weight:700;font-size:15px}
+.primary{background:#17365d;color:white}
+.secondary{background:#e8edf4;color:#17365d}
+.test{background:#fff3cd;color:#6b5200;border:1px solid #ffe08a}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px}
+.note{font-size:12px;color:#667085;line-height:1.45}
+#audioStatus{margin-top:10px;font-size:13px;color:#667085}
+#stage{display:none;position:fixed;inset:0;background:white;z-index:10;align-items:center;justify-content:center;flex-direction:column}
+#stim{font-size:min(28vw,220px);font-weight:800;text-align:center}
+#topbar{position:absolute;top:20px;left:24px;right:24px;display:flex;justify-content:space-between;color:#667085}
+#controls{position:absolute;bottom:25px;display:flex;gap:10px;opacity:.25}
+#controls:hover{opacity:1}
+#countdown{font-size:120px;font-weight:800}
+.dots{font-size:52px;letter-spacing:7px}
+#report{display:none}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stats div{background:#f6f8fb;padding:12px;border-radius:10px}
+@media(max-width:760px){
+  .grid,.row{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Attention Atölyesi</h1>
+  <div>Senkronize görsel + işitsel oturum motoru</div>
+</header>
+
+<main>
+<div class="grid">
+<section class="card">
+  <h2>1. Görsel Oturum</h2>
+  <div class="row">
+    <div>
+      <label>Öğrenci / oturum adı</label>
+      <input id="student" placeholder="Örn. 3. sınıf - Yön 1">
+    </div>
+    <div>
+      <label>Görsel görev</label>
+      <select id="visual">
+        <option value="direction">Yön–İnhibisyon</option>
+        <option value="stroop">Renk–Kelime Stroop</option>
+        <option value="number">Sayı–Çokluk</option>
+        <option value="size">Büyük–Küçük</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label>Toplam süre</label>
+      <select id="minutes">
+        <option value="1">1 dk</option>
+        <option value="2">2 dk</option>
+        <option value="3" selected>3 dk</option>
+        <option value="5">5 dk</option>
+      </select>
+    </div>
+    <div>
+      <label>Görsel değişim</label>
+      <select id="interval">
+        <option value="4000">4 sn</option>
+        <option value="3000" selected>3 sn</option>
+        <option value="2500">2,5 sn</option>
+        <option value="2000">2 sn</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label>Uyumsuz oranı</label>
+      <select id="incon">
+        <option value=".3">%30</option>
+        <option value=".5">%50</option>
+        <option value=".6" selected>%60</option>
+        <option value=".7">%70</option>
+      </select>
+    </div>
+    <div>
+      <label>Alıştırma</label>
+      <select id="practice">
+        <option value="5">5 deneme</option>
+        <option value="8">8 deneme</option>
+        <option value="0">Yok</option>
+      </select>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>2. İşitsel Kanal</h2>
+
+  <div class="row">
+    <div>
+      <label>İşitsel görev</label>
+      <select id="audio">
+        <option value="triple">Aynı enstrüman 3 kez</option>
+        <option value="target">Hedef ses: davul</option>
+        <option value="none">Kapalı</option>
+      </select>
+    </div>
+    <div>
+      <label>Ses aralığı</label>
+      <select id="audrate">
+        <option value="3500">Seyrek</option>
+        <option value="2700" selected>Orta</option>
+        <option value="2100">Yoğun</option>
+      </select>
+    </div>
+  </div>
+
+  <label>Cevap biçimi</label>
+  <select id="response">
+    <option>Kağıda işaretleme</option>
+    <option>Ekrana dokunma</option>
+    <option>Sesli cevap</option>
+    <option>Fiziksel hareket</option>
+  </select>
+
+  <div class="actions">
+    <button class="secondary" onclick="preview()">Önizleme</button>
+    <button class="test" onclick="testAudio()">🔊 Sesi Test Et</button>
+    <button class="secondary" onclick="savePreset()">Ayarı Kaydet</button>
+    <button class="primary" onclick="startSession()">Oturumu Başlat</button>
+  </div>
+  <div id="audioStatus">Ses motoru henüz test edilmedi.</div>
+</section>
+</div>
+
+<section class="card">
+  <h2>Hazır Ayarlar</h2>
+  <div id="presets" class="actions"></div>
+  <p class="note">Eğitim oturumu aracıdır; standartlaştırılmış Attentioner testi veya tanısal değerlendirme aracı değildir.</p>
+</section>
+
+<section id="report" class="card">
+  <h2>Oturum Özeti</h2>
+  <div class="stats" id="stats"></div>
+</section>
+</main>
+
+<div id="stage">
+  <div id="topbar">
+    <span id="sessionLabel"></span>
+    <span id="timer"></span>
+  </div>
+  <div id="countdown"></div>
+  <div id="stim"></div>
+  <div id="controls">
+    <button class="secondary" onclick="togglePause()">Duraklat / Devam</button>
+    <button class="secondary" onclick="endSession()">Bitir</button>
+  </div>
+</div>
+
 <script>
 let vt,at,et,paused=false,startAt=0,visCount=0,audCount=0,targetAud=0,lastSounds=[];
-const dirs=[['↑','YUKARI'],['↓','AŞAĞI'],['←','SOL'],['→','SAĞ']], colors=[['KIRMIZI','#d32f2f'],['MAVİ','#1565c0'],['YEŞİL','#2e7d32'],['SARI','#b58d00']];
-const $=x=>document.getElementById(x); function cfg(){return {student:$('student').value||'Oturum',visual:$('visual').value,minutes:+$('minutes').value,interval:+$('interval').value,incon:+$('incon').value,practice:+$('practice').value,audio:$('audio').value,audrate:+$('audrate').value,response:$('response').value}}
-function showStim(c,pre=false){let s=$('stim');s.innerHTML='';s.style.fontSize='';if(c.visual==='direction'){let a=dirs[Math.floor(Math.random()*4)],pool=dirs.filter(x=>x[0]!=a[0]),b=Math.random()<c.incon?pool[Math.floor(Math.random()*3)]:a;s.innerHTML='<div>'+a[0]+'</div><div style="font-size:34px;margin-top:18px">'+b[1]+'</div>'}if(c.visual==='stroop'){let a=colors[Math.floor(Math.random()*4)],pool=colors.filter(x=>x[0]!=a[0]),b=Math.random()<c.incon?pool[Math.floor(Math.random()*3)]:a;s.style.fontSize='min(15vw,145px)';s.innerHTML='<span style="color:'+b[1]+'">'+a[0]+'</span>'}if(c.visual==='number'){let n=2+Math.floor(Math.random()*6),d=Math.max(1,n+(Math.random()<.5?-1:1)*(1+Math.floor(Math.random()*2)));s.innerHTML='<div style="font-size:90px">'+n+'</div><div class="dots">'+'● '.repeat(d)+'</div>'}if(c.visual==='size'){let big=Math.random()<.5;s.innerHTML='<div style="font-size:'+(big?180:70)+'px">'+(Math.random()<.5?'●':'■')+'</div><div style="font-size:28px;margin-top:18px">Kural: BÜYÜK ise işaretle</div>'}if(pre)s.innerHTML+='<div style="font-size:18px;color:#667085;margin-top:35px">ALIŞTIRMA / ÖNİZLEME</div>';visCount++}
-function tone(k){let A=new (window.AudioContext||window.webkitAudioContext)(),o=A.createOscillator(),g=A.createGain();o.type=k==='drum'?'square':'sine';o.frequency.value=k==='piano'?523:k==='drum'?120:659;g.gain.setValueAtTime(.16,A.currentTime);g.gain.exponentialRampToValueAtTime(.001,A.currentTime+.35);o.connect(g);g.connect(A.destination);o.start();o.stop(A.currentTime+.38)}
-function audioEvent(c){if(c.audio==='none')return;let ks=['piano','drum','violin'],k=ks[Math.floor(Math.random()*3)];if(c.audio==='triple'&&lastSounds.length>=2&&Math.random()<.22){k=lastSounds[lastSounds.length-1];if(lastSounds[lastSounds.length-2]===k)targetAud++}if(c.audio==='target'&&k==='drum')targetAud++;lastSounds.push(k);lastSounds=lastSounds.slice(-3);tone(k);audCount++}
-function preview(){let c=cfg();$('stage').style.display='flex';$('sessionLabel').textContent='Önizleme';$('timer').textContent='';$('countdown').textContent='';showStim(c,true);setTimeout(()=>$('stage').style.display='none',2400)}
-function startSession(){let c=cfg();$('stage').style.display='flex';$('sessionLabel').textContent=c.student;visCount=audCount=targetAud=0;lastSounds=[];let n=3;$('stim').innerHTML='';$('countdown').textContent=n;let q=setInterval(()=>{n--;if(n)$('countdown').textContent=n;else{clearInterval(q);$('countdown').textContent='';run(c)}},800)}
-function run(c){startAt=Date.now();showStim(c);vt=setInterval(()=>{if(!paused)showStim(c)},c.interval);if(c.audio!=='none')at=setInterval(()=>{if(!paused)audioEvent(c)},c.audrate);et=setInterval(()=>{if(!paused){let left=c.minutes*60-Math.floor((Date.now()-startAt)/1000);$('timer').textContent=Math.max(0,left)+' sn';if(left<=0)endSession()}},250)}
-function togglePause(){paused=!paused} function endSession(){clearInterval(vt);clearInterval(at);clearInterval(et);$('stage').style.display='none';let c=cfg();$('report').style.display='block';$('stats').innerHTML='<div><b>'+visCount+'</b><br>Görsel uyaran</div><div><b>'+audCount+'</b><br>İşitsel uyaran</div><div><b>'+targetAud+'</b><br>İşitsel hedef</div><div><b>'+c.minutes+' dk</b><br>Planlanan süre</div>'}
-function savePreset(){let a=JSON.parse(localStorage.getItem('aa_presets')||'[]');a.push(cfg());localStorage.setItem('aa_presets',JSON.stringify(a));renderPresets()} function renderPresets(){let a=JSON.parse(localStorage.getItem('aa_presets')||'[]');$('presets').innerHTML=a.length?'':'Henüz kayıtlı ayar yok.';a.forEach(p=>{let b=document.createElement('button');b.className='secondary';b.textContent=p.student;b.onclick=()=>{Object.keys(p).forEach(k=>{if($(k))$(k).value=p[k]})};$('presets').appendChild(b)})}renderPresets();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
-</script></body></html>
+let audioCtx=null;
+
+const dirs=[['↑','YUKARI'],['↓','AŞAĞI'],['←','SOL'],['→','SAĞ']];
+const colors=[['KIRMIZI','#d32f2f'],['MAVİ','#1565c0'],['YEŞİL','#2e7d32'],['SARI','#b58d00']];
+const $=x=>document.getElementById(x);
+
+function cfg(){
+  return {
+    student:$('student').value||'Oturum',
+    visual:$('visual').value,
+    minutes:+$('minutes').value,
+    interval:+$('interval').value,
+    incon:+$('incon').value,
+    practice:+$('practice').value,
+    audio:$('audio').value,
+    audrate:+$('audrate').value,
+    response:$('response').value
+  }
+}
+
+async function unlockAudio(){
+  const AudioClass=window.AudioContext||window.webkitAudioContext;
+  if(!AudioClass) throw new Error("Bu tarayıcı Web Audio API desteklemiyor.");
+
+  if(!audioCtx) audioCtx=new AudioClass();
+
+  if(audioCtx.state==='suspended'){
+    await audioCtx.resume();
+  }
+
+  const buffer=audioCtx.createBuffer(1,1,22050);
+  const source=audioCtx.createBufferSource();
+  source.buffer=buffer;
+  source.connect(audioCtx.destination);
+  source.start(0);
+
+  return audioCtx;
+}
+
+async function tone(k){
+  const A=await unlockAudio();
+  const now=A.currentTime;
+
+  if(k==='drum'){
+    const o=A.createOscillator();
+    const g=A.createGain();
+    o.type='square';
+    o.frequency.setValueAtTime(150,now);
+    o.frequency.exponentialRampToValueAtTime(65,now+.18);
+    g.gain.setValueAtTime(.22,now);
+    g.gain.exponentialRampToValueAtTime(.001,now+.22);
+    o.connect(g); g.connect(A.destination);
+    o.start(now); o.stop(now+.24);
+    return;
+  }
+
+  const o=A.createOscillator();
+  const g=A.createGain();
+  o.type=k==='violin'?'sawtooth':'sine';
+  o.frequency.value=k==='piano'?523.25:659.25;
+  g.gain.setValueAtTime(.0001,now);
+  g.gain.exponentialRampToValueAtTime(.18,now+.02);
+  g.gain.exponentialRampToValueAtTime(.001,now+.38);
+  o.connect(g); g.connect(A.destination);
+  o.start(now); o.stop(now+.40);
+}
+
+async function testAudio(){
+  const s=$('audioStatus');
+  try{
+    s.textContent='Ses motoru açılıyor…';
+    await unlockAudio();
+    await tone('piano');
+    setTimeout(()=>tone('drum'),650);
+    setTimeout(()=>tone('violin'),1300);
+    setTimeout(()=>{s.textContent='Ses testi tamamlandı: piyano → davul → keman.'},1700);
+  }catch(e){
+    s.textContent='Ses açılamadı: '+e.message;
+  }
+}
+
+function showStim(c,pre=false){
+  let s=$('stim');
+  s.innerHTML='';
+  s.style.fontSize='';
+
+  if(c.visual==='direction'){
+    let a=dirs[Math.floor(Math.random()*4)];
+    let pool=dirs.filter(x=>x[0]!=a[0]);
+    let b=Math.random()<c.incon?pool[Math.floor(Math.random()*3)]:a;
+    s.innerHTML='<div>'+a[0]+'</div><div style="font-size:34px;margin-top:18px">'+b[1]+'</div>';
+  }
+
+  if(c.visual==='stroop'){
+    let a=colors[Math.floor(Math.random()*4)];
+    let pool=colors.filter(x=>x[0]!=a[0]);
+    let b=Math.random()<c.incon?pool[Math.floor(Math.random()*3)]:a;
+    s.style.fontSize='min(15vw,145px)';
+    s.innerHTML='<span style="color:'+b[1]+'">'+a[0]+'</span>';
+  }
+
+  if(c.visual==='number'){
+    let n=2+Math.floor(Math.random()*6);
+    let d=Math.max(1,n+(Math.random()<.5?-1:1)*(1+Math.floor(Math.random()*2)));
+    s.innerHTML='<div style="font-size:90px">'+n+'</div><div class="dots">'+'● '.repeat(d)+'</div>';
+  }
+
+  if(c.visual==='size'){
+    let big=Math.random()<.5;
+    s.innerHTML='<div style="font-size:'+(big?180:70)+'px">'+(Math.random()<.5?'●':'■')+'</div><div style="font-size:28px;margin-top:18px">Kural: BÜYÜK ise işaretle</div>';
+  }
+
+  if(pre){
+    s.innerHTML+='<div style="font-size:18px;color:#667085;margin-top:35px">ALIŞTIRMA / ÖNİZLEME</div>';
+  }
+
+  visCount++;
+}
+
+async function audioEvent(c){
+  if(c.audio==='none') return;
+
+  let ks=['piano','drum','violin'];
+  let k=ks[Math.floor(Math.random()*3)];
+
+  if(c.audio==='triple'&&lastSounds.length>=2&&Math.random()<.22){
+    k=lastSounds[lastSounds.length-1];
+    if(lastSounds[lastSounds.length-2]===k) targetAud++;
+  }
+
+  if(c.audio==='target'&&k==='drum') targetAud++;
+
+  lastSounds.push(k);
+  lastSounds=lastSounds.slice(-3);
+
+  try{
+    await tone(k);
+    audCount++;
+  }catch(e){
+    $('audioStatus').textContent='Ses oynatma hatası: '+e.message;
+  }
+}
+
+function preview(){
+  let c=cfg();
+  $('stage').style.display='flex';
+  $('sessionLabel').textContent='Önizleme';
+  $('timer').textContent='';
+  $('countdown').textContent='';
+  showStim(c,true);
+  setTimeout(()=>$('stage').style.display='none',2400);
+}
+
+async function startSession(){
+  let c=cfg();
+
+  try{
+    await unlockAudio();
+    if(c.audio!=='none'){
+      await tone('piano');
+      $('audioStatus').textContent='Ses motoru aktif.';
+    }
+  }catch(e){
+    $('audioStatus').textContent='Ses açılamadı: '+e.message;
+  }
+
+  $('stage').style.display='flex';
+  $('sessionLabel').textContent=c.student;
+
+  visCount=0;
+  audCount=0;
+  targetAud=0;
+  lastSounds=[];
+  paused=false;
+
+  let n=3;
+  $('stim').innerHTML='';
+  $('countdown').textContent=n;
+
+  let q=setInterval(()=>{
+    n--;
+    if(n){
+      $('countdown').textContent=n;
+    }else{
+      clearInterval(q);
+      $('countdown').textContent='';
+      run(c);
+    }
+  },800);
+}
+
+function run(c){
+  startAt=Date.now();
+  showStim(c);
+
+  vt=setInterval(()=>{
+    if(!paused) showStim(c);
+  },c.interval);
+
+  if(c.audio!=='none'){
+    audioEvent(c); // ilk işitsel uyaranı bekletmeden üret
+    at=setInterval(()=>{
+      if(!paused) audioEvent(c);
+    },c.audrate);
+  }
+
+  et=setInterval(()=>{
+    if(!paused){
+      let left=c.minutes*60-Math.floor((Date.now()-startAt)/1000);
+      $('timer').textContent=Math.max(0,left)+' sn';
+      if(left<=0) endSession();
+    }
+  },250);
+}
+
+function togglePause(){
+  paused=!paused;
+}
+
+function endSession(){
+  clearInterval(vt);
+  clearInterval(at);
+  clearInterval(et);
+
+  $('stage').style.display='none';
+
+  let c=cfg();
+  $('report').style.display='block';
+  $('stats').innerHTML=
+    '<div><b>'+visCount+'</b><br>Görsel uyaran</div>'+
+    '<div><b>'+audCount+'</b><br>İşitsel uyaran</div>'+
+    '<div><b>'+targetAud+'</b><br>İşitsel hedef</div>'+
+    '<div><b>'+c.minutes+' dk</b><br>Planlanan süre</div>';
+}
+
+function savePreset(){
+  let a=JSON.parse(localStorage.getItem('aa_presets')||'[]');
+  a.push(cfg());
+  localStorage.setItem('aa_presets',JSON.stringify(a));
+  renderPresets();
+}
+
+function renderPresets(){
+  let a=JSON.parse(localStorage.getItem('aa_presets')||'[]');
+  $('presets').innerHTML=a.length?'':'Henüz kayıtlı ayar yok.';
+
+  a.forEach(p=>{
+    let b=document.createElement('button');
+    b.className='secondary';
+    b.textContent=p.student;
+    b.onclick=()=>{
+      Object.keys(p).forEach(k=>{
+        if($(k)) $(k).value=p[k];
+      })
+    };
+    $('presets').appendChild(b);
+  });
+}
+
+renderPresets();
+
+// Yeni sürümün eski önbelleğe takılmasını önlemek için
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js?v=2');
+}
+</script>
+</body>
+</html>
